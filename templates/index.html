@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>To-Do List with Deadlines</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f7f8;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: white;
+            padding: 20px 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .add-task-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .add-task-form input[type="text"],
+        .add-task-form input[type="date"] {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .add-task-form button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .add-task-form button:hover {
+            background-color: #218838;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            text-align: left;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .completed {
+            text-decoration: line-through;
+            color: #888;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        /* Confirmation popup style */
+        #confirmPopup {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        #confirmBox {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(0,0,0,0.3);
+            max-width: 300px;
+        }
+        #confirmBox button {
+            margin: 10px 15px 0 15px;
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+        }
+        #confirmYes {
+            background-color: #dc3545;
+            color: white;
+        }
+        #confirmNo {
+            background-color: #6c757d;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>To-Do List with Deadlines</h1>
+        <form action="{{ url_for('add_task') }}" method="post" class="add-task-form" id="addTaskForm">
+            <input type="text" name="description" placeholder="Task description" required />
+            <input type="date" name="deadline" required />
+            <button type="submit">Add Task</button>
+        </form>
+
+        {% if tasks %}
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Description</th>
+                    <th>Deadline</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in tasks %}
+                <tr class="{{ 'completed' if task['Completed'] else '' }}">
+                    <td>{{ loop.index0 + 1 }}</td>
+                    <td>{{ task['Description'] }}</td>
+                    <td>{{ task['Deadline'] }}</td>
+                    <td>{{ 'Completed' if task['Completed'] else 'Pending' }}</td>
+                    <td>
+                        {% if not task['Completed'] %}
+                        <a href="#" class="complete-link" data-task-id="{{ loop.index0 }}">Mark Complete</a>
+                        {% else %}
+                        —
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No tasks available.</p>
+        {% endif %}
+    </div>
+
+    <!-- Confirmation Popup -->
+    <div id="confirmPopup">
+        <div id="confirmBox">
+            <p>Mark this task as complete?</p>
+            <button id="confirmYes">Yes</button>
+            <button id="confirmNo">No</button>
+        </div>
+    </div>
+
+    <script>
+        // Confirmation popup logic for marking task complete
+        document.addEventListener('DOMContentLoaded', function() {
+            const popup = document.getElementById('confirmPopup');
+            const yesBtn = document.getElementById('confirmYes');
+            const noBtn = document.getElementById('confirmNo');
+            let taskIdToComplete = null;
+
+            document.querySelectorAll('.complete-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    taskIdToComplete = this.getAttribute('data-task-id');
+                    popup.style.display = 'flex';
+                });
+            });
+
+            yesBtn.addEventListener('click', function() {
+                if (taskIdToComplete !== null) {
+                    window.location.href = `/complete/${taskIdToComplete}`;
+                }
+            });
+
+            noBtn.addEventListener('click', function() {
+                popup.style.display = 'none';
+                taskIdToComplete = null;
+            });
+
+            // Close popup if click outside confirm box
+            popup.addEventListener('click', function(e) {
+                if(e.target === popup) {
+                    popup.style.display = 'none';
+                    taskIdToComplete = null;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
